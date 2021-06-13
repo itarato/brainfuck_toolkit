@@ -39,83 +39,94 @@ class Generator
     end
   end
 
+  class Context
+    attr_reader(:source)
+
+    def initialize(mem)
+      @source = ""
+      @mem = mem
+    end
+
+    def make_var(name)
+      @mem.make_var(name)
+    end
+
+    #
+    # Does not verify destination state!
+    #
+    def add(v_a, v_b, v_dest)
+      source_a = @mem.var_pos(v_a)
+      source_b = @mem.var_pos(v_b)
+      dest = @mem.var_pos(v_dest)
+
+      if v_a == v_b || v_a == v_dest || v_b == v_dest
+        raise("Sources and destination must be different")
+      end
+
+      # Zero dest
+      zero(v_dest)
+
+      # Increment dest by first num
+      move_mem_p(source_a) # Go to first num
+      code("[") # Start loop
+      code("-") # Dec source-a
+      move_mem_p(dest) # Move to dest
+      code("+") # Inc dest
+      move_mem_p(source_a) # Move to source a
+      code("]") # Loop end (at source a)
+
+      # Increment dest by second num
+      move_mem_p(source_b) # Go to second num
+      code("[") # Start loop
+      code("-") # Dec source-b
+      move_mem_p(dest) # Move to dest
+      code("+") # Inc dest
+      move_mem_p(source_b) # Move to source a
+      code("]") # Loop end (at source b)
+    end
+
+    def print(v_dest)
+      dest = @mem.var_pos(v_dest)
+
+      move_mem_p(dest)
+      code(".")
+    end
+
+    def zero(v_dest)
+      dest = @mem.var_pos(v_dest)
+
+      move_mem_p(dest)
+      code("[-]") # Dec until zero
+    end
+
+    def set(v_dest, value)
+      dest = @mem.var_pos(v_dest)
+
+      zero(v_dest)
+      move_mem_p(dest)
+      code("+" * value)
+    end
+
+    private
+    
+    def move_mem_p(to)
+      if @mem.ptr < to
+        code(">" * (to - @mem.ptr))
+      else
+        code("<" * (@mem.ptr - to))
+      end
+      @mem.ptr = to
+    end
+
+    def code(code_text)
+      @source << code_text
+    end
+  end
+
+  attr_reader(:main_ctx)
+
   def initialize
-    @source = ""
     @mem = Memory.new
-  end
-
-  def make_var(name)
-    @mem.make_var(name)
-  end
-
-  #
-  # Does not verify destination state!
-  #
-  def add(v_a, v_b, v_dest)
-    source_a = @mem.var_pos(v_a)
-    source_b = @mem.var_pos(v_b)
-    dest = @mem.var_pos(v_dest)
-
-    if source_a == source_b || source_b == dest || source_a == dest
-      raise("Sources and destination must be different")
-    end
-
-    # Zero dest
-    zero(v_dest)
-
-    # Increment dest by first num
-    move_mem_p(source_a) # Go to first num
-    code("[") # Start loop
-    code("-") # Dec source-a
-    move_mem_p(dest) # Move to dest
-    code("+") # Inc dest
-    move_mem_p(source_a) # Move to source a
-    code("]") # Loop end (at source a)
-
-    # Increment dest by second num
-    move_mem_p(source_b) # Go to second num
-    code("[") # Start loop
-    code("-") # Dec source-b
-    move_mem_p(dest) # Move to dest
-    code("+") # Inc dest
-    move_mem_p(source_b) # Move to source a
-    code("]") # Loop end (at source b)
-  end
-
-  def print(v_dest)
-    dest = @mem.var_pos(v_dest)
-
-    move_mem_p(dest)
-    code(".")
-  end
-
-  def zero(v_dest)
-    dest = @mem.var_pos(v_dest)
-
-    move_mem_p(dest)
-    code("[-]") # Dec until zero
-  end
-
-  def set(v_dest, value)
-    dest = @mem.var_pos(v_dest)
-
-    zero(v_dest)
-    move_mem_p(dest)
-    code("+" * value)
-  end
-
-  private
-  
-  def move_mem_p(to)
-    if @mem.ptr < to
-      code(">" * (to - @mem.ptr))
-    else
-      code("<" * (@mem.ptr - to))
-    end
-    @mem.ptr = to
-  end
-
-  def code(code_text)
-    @source << code_text
+    @main_ctx = Context.new(@mem)
   end
 end

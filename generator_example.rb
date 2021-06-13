@@ -1,16 +1,16 @@
 require_relative 'generator'
 require_relative 'interpreter'
 
-g = Generator.new
+ctx = Generator.new.main_ctx
 
-g.make_var(:a)
-g.make_var(:b)
-g.make_var(:c)
+ctx.make_var(:a)
+ctx.make_var(:b)
+ctx.make_var(:c)
 
-g.set(:a, 22)
-g.set(:b, 20)
-g.add(:a, :b, :c)
-g.print(:c)
+ctx.set(:a, 22)
+ctx.set(:b, 20)
+ctx.add(:a, :b, :c)
+ctx.print(:c)
 
-puts g.source
-Interpreter.execute(g.source)
+puts ctx.source
+Interpreter.execute(ctx.source)
