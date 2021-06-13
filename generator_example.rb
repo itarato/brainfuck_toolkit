@@ -12,5 +12,5 @@ g.set(:b, 20)
 g.add(:a, :b, :c)
 g.print(:c)
 
-puts g.source_buffer
-Interpreter.execute(g.source_buffer)
+puts g.source
+Interpreter.execute(g.source)
