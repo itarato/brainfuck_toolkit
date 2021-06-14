@@ -15,9 +15,9 @@ ctx.print(:c)
 
 ctx.make_var(:d)
 ctx.inc(:d, 2)
-# ctx.dec(:d, 2)
+ctx.dec(:d, 2)
 
-ctx.callnz(:d) do |c|
+ctx.callz(:d) do |c|
   c.inc(:c, 2)
   c.make_var(:f)
   c.inc(:a)
