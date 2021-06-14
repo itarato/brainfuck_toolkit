@@ -19,11 +19,17 @@ ctx.dec(:d, 2)
 
 ctx.callz(:d) do |c|
   c.inc(:c, 2)
-  c.make_var(:f)
   c.inc(:a)
 end
 
-ctx.print(:c)
+ctx.times(4) do |c|
+  c.print(:c)
+end
+
+ctx.make_var(:f)
+ctx.set(:f, 4)
+ctx.set(:c, 'a'.ord)
+ctx.loop_with(:f) { |c| c.print(:c) }
 
 puts ctx.source
 int = Interpreter.new(ctx.source)
