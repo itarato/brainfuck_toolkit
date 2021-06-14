@@ -111,6 +111,25 @@ class Generator
       code("+" * value)
     end
 
+    def callz(cond, &ctx_blk)
+      temp = gen_var
+      inc(temp)
+
+      cond_clone = clone_var(cond)
+      bracket(cond_clone, just_once: true) do
+        dec(temp)
+      end
+
+      bracket(temp, just_once: true) do
+        ctx = spawn_ctx
+        yield(ctx)
+        code(ctx.source) # Execute context
+      end
+
+      mem.free_var(cond_clone)
+      mem.free_var(temp)
+    end
+
     def callnz(cond, &ctx_blk)
       cond_clone = clone_var(cond)
 
