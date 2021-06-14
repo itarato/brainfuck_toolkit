@@ -12,10 +12,6 @@ class Generator
       @vars = {}
     end
 
-    #
-    # @param name - Symbol, name of var
-    # @returns Integer - Index of free space
-    #
     def make_var(name)
       raise("Var name must be symbol") unless name.is_a?(Symbol)
       
@@ -50,19 +46,19 @@ class Generator
     end
 
     def make_var(name)
-      @mem.make_var(name)
+      mem.make_var(name)
     end
 
     def go(to)
-      to = @mem.var_pos(to)
+      to = mem.var_pos(to)
 
-      if @mem.ptr < to
-        code(">" * (to - @mem.ptr))
+      if mem.ptr < to
+        code(">" * (to - mem.ptr))
       else
-        code("<" * (@mem.ptr - to))
+        code("<" * (mem.ptr - to))
       end
       
-      @mem.ptr = to
+      mem.ptr = to
     end
 
     def add(a, b, dest)
@@ -85,8 +81,8 @@ class Generator
         inc(dest)
       end
 
-      @mem.free_var(a_clone)
-      @mem.free_var(b_clone)
+      mem.free_var(a_clone)
+      mem.free_var(b_clone)
     end
 
     def print(dest)
@@ -124,26 +120,22 @@ class Generator
         code(ctx.source) # Execute context
       end
 
-      @mem.free_var(cond_clone)
+      mem.free_var(cond_clone)
     end
 
     private
 
+    attr_reader(:mem)
+
     def bracket(var, just_once: false)
       go(var)
-      start_loop
-        yield
-
-        zero(var) if just_once
-        go(var)
-      end_loop
-    end
-
-    def start_loop
       code("[")
-    end
 
-    def end_loop
+      yield
+
+      zero(var) if just_once
+
+      go(var)
       code("]")
     end
 
@@ -155,22 +147,18 @@ class Generator
       temp = gen_var
       var_clone = gen_var
 
-      go(var)
-      start_loop
+      bracket(var) do
         inc(temp)
         inc(var_clone)
         dec(var)
-        go(var)
-      end_loop
-
-      go(temp)
-      start_loop
+      end
+ 
+      bracket(temp) do
         inc(var)
         dec(temp)
-        go(temp)
-      end_loop
+      end
 
-      @mem.free_var(temp)
+      mem.free_var(temp)
 
       var_clone
     end
@@ -182,7 +170,7 @@ class Generator
     end
 
     def spawn_ctx
-      Context.new(@mem)
+      Context.new(mem)
     end
   end
 
