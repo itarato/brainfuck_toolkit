@@ -1,3 +1,5 @@
+require 'securerandom'
+
 class Generator
   attr_reader(:source)
 
@@ -29,13 +31,13 @@ class Generator
       end
     end
 
+    def free_var(name)
+      @vars.delete(name)
+    end
+
     def var_pos(name)
       raise("Var does not exist: #{name}") unless @vars.key?(name)
       @vars[name]
-    end
-
-    def free_var(name)
-      @vars.delete(name)
     end
   end
 
@@ -51,75 +53,136 @@ class Generator
       @mem.make_var(name)
     end
 
-    #
-    # Does not verify destination state!
-    #
-    def add(v_a, v_b, v_dest)
-      source_a = @mem.var_pos(v_a)
-      source_b = @mem.var_pos(v_b)
-      dest = @mem.var_pos(v_dest)
+    def go(to)
+      to = @mem.var_pos(to)
 
-      if v_a == v_b || v_a == v_dest || v_b == v_dest
-        raise("Sources and destination must be different")
-      end
-
-      # Zero dest
-      zero(v_dest)
-
-      # Increment dest by first num
-      move_mem_p(source_a) # Go to first num
-      code("[") # Start loop
-      code("-") # Dec source-a
-      move_mem_p(dest) # Move to dest
-      code("+") # Inc dest
-      move_mem_p(source_a) # Move to source a
-      code("]") # Loop end (at source a)
-
-      # Increment dest by second num
-      move_mem_p(source_b) # Go to second num
-      code("[") # Start loop
-      code("-") # Dec source-b
-      move_mem_p(dest) # Move to dest
-      code("+") # Inc dest
-      move_mem_p(source_b) # Move to source a
-      code("]") # Loop end (at source b)
-    end
-
-    def print(v_dest)
-      dest = @mem.var_pos(v_dest)
-
-      move_mem_p(dest)
-      code(".")
-    end
-
-    def zero(v_dest)
-      dest = @mem.var_pos(v_dest)
-
-      move_mem_p(dest)
-      code("[-]") # Dec until zero
-    end
-
-    def set(v_dest, value)
-      dest = @mem.var_pos(v_dest)
-
-      zero(v_dest)
-      move_mem_p(dest)
-      code("+" * value)
-    end
-
-    private
-    
-    def move_mem_p(to)
       if @mem.ptr < to
         code(">" * (to - @mem.ptr))
       else
         code("<" * (@mem.ptr - to))
       end
+      
       @mem.ptr = to
+    end
+
+    def add(a, b, dest)
+      if a == b || a == dest || b == dest
+        raise("Sources and destination must be different")
+      end
+
+      a_clone = clone_var(a)
+      b_clone = clone_var(b)
+
+      zero(dest)
+
+      bracket(a_clone) do
+        dec(a_clone)
+        inc(dest)
+      end
+
+      bracket(b_clone) do
+        dec(b_clone)
+        inc(dest)
+      end
+
+      @mem.free_var(a_clone)
+      @mem.free_var(b_clone)
+    end
+
+    def print(dest)
+      go(dest)
+      code(".")
+    end
+
+    def zero(dest)
+      go(dest)
+      code("[-]") # Dec until zero
+    end
+
+    def inc(dest, value = 1)
+      go(dest)
+      code('+' * value)
+    end
+
+    def dec(dest, value = 1)
+      go(dest)
+      code('-' * value)
+    end
+
+    def set(dest, value)
+      zero(dest)
+      go(dest)
+      code("+" * value)
+    end
+
+    def callnz(cond, &ctx_blk)
+      cond_clone = clone_var(cond)
+
+      bracket(cond_clone, just_once: true) do
+        ctx = spawn_ctx
+        yield(ctx)
+        code(ctx.source) # Execute context
+      end
+
+      @mem.free_var(cond_clone)
+    end
+
+    private
+
+    def bracket(var, just_once: false)
+      go(var)
+      start_loop
+        yield
+
+        zero(var) if just_once
+        go(var)
+      end_loop
+    end
+
+    def start_loop
+      code("[")
+    end
+
+    def end_loop
+      code("]")
     end
 
     def code(code_text)
       @source << code_text
+    end
+
+    def clone_var(var)
+      temp = gen_var
+      var_clone = gen_var
+
+      go(var)
+      start_loop
+        inc(temp)
+        inc(var_clone)
+        dec(var)
+        go(var)
+      end_loop
+
+      go(temp)
+      start_loop
+        inc(var)
+        dec(temp)
+        go(temp)
+      end_loop
+
+      @mem.free_var(temp)
+
+      var_clone
+    end
+
+    def gen_var
+      name = SecureRandom.hex(12).to_sym
+      make_var(name)
+      name
+    end
+
+    def spawn_ctx
+      Context.new(@mem)
     end
   end
 
@@ -128,5 +191,12 @@ class Generator
   def initialize
     @mem = Memory.new
     @main_ctx = Context.new(@mem)
+  end
+  
+  def dump
+    puts 'Memory:'
+    @mem.vars.each do |k, v|
+      puts "  - #{k} = [#{v}]"
+    end
   end
 end

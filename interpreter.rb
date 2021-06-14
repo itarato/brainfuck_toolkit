@@ -15,6 +15,8 @@ class Interpreter
   end
 
   def execute
+    puts "#{'-' * 16} SCREEN #{'-' * 16}"
+
     while !complete?
       case (instruction = read_instruction)
       when '>' then mem_p_inc
@@ -29,6 +31,16 @@ class Interpreter
 
       pc_inc
     end
+
+    puts "\n#{'-' * 16}  DONE  #{'-' * 16}"
+  end
+
+  def dump
+    puts "PC: #{@pc}"
+    puts "MP: #{@mem_p}"
+    
+    puts "Memory:"
+    @mem.reverse.drop_while { |v| v == 0 }.reverse.each_with_index { |v, i| puts "  - [#{i}] = #{v}" }
   end
 
   private
