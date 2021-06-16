@@ -38,8 +38,8 @@ ctx.loop_with(:f) do |c|
   end
 end
 
-ctx.set(:a, 5)
-ctx.set(:b, 12)
+ctx.set(:a, 12)
+ctx.set(:b, 6)
 ctx.mul(:a, :b, :c)
 ctx.print(:c)
 
