@@ -96,8 +96,11 @@ class Generator
       zero(dest)
 
       loop_with(a_clone) do
-        # TODO
+        inc_with(dest, b_clone)
       end
+
+      mem.free_var(a_clone)
+      mem.free_var(b_clone)
     end
 
     def print(dest)

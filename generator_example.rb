@@ -38,12 +38,10 @@ ctx.loop_with(:f) do |c|
   end
 end
 
-ctx.set(:f, 70)
-ctx.print(:f)
-ctx.make_var(:g)
-ctx.set(:g, 3)
-ctx.dec_with(:f, :g)
-ctx.print(:f)
+ctx.set(:a, 5)
+ctx.set(:b, 12)
+ctx.mul(:a, :b, :c)
+ctx.print(:c)
 
 puts ctx
   .source
