@@ -29,9 +29,29 @@ end
 ctx.make_var(:f)
 ctx.set(:f, 4)
 ctx.set(:c, 'a'.ord)
-ctx.loop_with(:f) { |c| c.print(:c) }
+ctx.make_var(:c1)
+ctx.set(:c1, '1'.ord)
+ctx.loop_with(:f) do |c|
+  c.print(:c)
+  c.times(3) do |c2|
+    c.print(:c1)
+  end
+end
 
-puts ctx.source
+ctx.set(:f, 70)
+ctx.print(:f)
+ctx.make_var(:g)
+ctx.set(:g, 3)
+ctx.dec_with(:f, :g)
+ctx.print(:f)
+
+puts ctx
+  .source
+  .chars
+  .each_slice(32)
+  .to_a
+  .map(&:join)
+  .join("\n")
 int = Interpreter.new(ctx.source)
 int.execute
 

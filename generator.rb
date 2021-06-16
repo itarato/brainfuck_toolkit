@@ -85,6 +85,21 @@ class Generator
       mem.free_var(b_clone)
     end
 
+    def mul(a, b, dest)
+      if a == b || a == dest || b == dest
+        raise("Sources and destination must be different")
+      end
+
+      a_clone = clone_var(a)
+      b_clone = clone_var(b)
+
+      zero(dest)
+
+      loop_with(a_clone) do
+        # TODO
+      end
+    end
+
     def print(dest)
       go(dest)
       code(".")
@@ -100,9 +115,31 @@ class Generator
       code('+' * value)
     end
 
+    def inc_with(dest, var)
+      acc = clone_var(var)
+
+      bracket(acc) do
+        inc(dest)
+        dec(acc)
+      end
+
+      mem.free_var(acc)
+    end
+
     def dec(dest, value = 1)
       go(dest)
       code('-' * value)
+    end
+
+    def dec_with(dest, var)
+      acc = clone_var(var)
+
+      bracket(acc) do
+        dec(dest)
+        dec(acc)
+      end
+
+      mem.free_var(acc)
     end
 
     def set(dest, value)
