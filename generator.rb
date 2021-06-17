@@ -151,7 +151,7 @@ class Generator
       code("+" * value)
     end
 
-    def callz(cond)
+    def callz(cond, &blk)
       temp = gen_var
       inc(temp)
 
@@ -162,7 +162,7 @@ class Generator
 
       bracket(temp, just_once: true) do
         ctx = spawn_ctx
-        yield(ctx)
+        ctx.instance_eval(&blk)
         code(ctx.source) # Execute context
       end
 
@@ -170,37 +170,40 @@ class Generator
       mem.free_var(temp)
     end
 
-    def callnz(cond)
+    def callnz(cond, &blk)
       cond_clone = clone_var(cond)
 
       bracket(cond_clone, just_once: true) do
         ctx = spawn_ctx
-        yield(ctx)
+        ctx.instance_eval(&blk)
         code(ctx.source) # Execute context
       end
 
       mem.free_var(cond_clone)
     end
 
-    def times(n)
+    def times(n, &blk)
       counter = gen_var
       set(counter, n)
 
       bracket(counter) do
         ctx = spawn_ctx
-        yield(ctx)
+        # yield(ctx)
+
+        ctx.instance_eval(&blk)
+
         code(ctx.source)
 
         dec(counter)
       end
     end
 
-    def loop_with(var)
+    def loop_with(var, &blk)
       counter = clone_var(var)
 
       bracket(counter) do
         ctx = spawn_ctx
-        yield(ctx)
+        ctx.instance_eval(&blk)
         code(ctx.source)
 
         dec(counter)
@@ -265,6 +268,10 @@ class Generator
   def initialize
     @mem = Memory.new
     @main_ctx = Context.new(@mem)
+  end
+
+  def code(&blk)
+    @main_ctx.instance_eval(&blk)
   end
   
   def dump
