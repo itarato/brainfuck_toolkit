@@ -5,16 +5,16 @@ g = Generator.new
 ctx = g.main_ctx
 
 g.bf do
-  make_var(:a)
-  make_var(:b)
-  make_var(:c)
+  var(:a)
+  var(:b)
+  var(:c)
 
   set(:a, 20)
   set(:b, 20)
   add(:a, :b, :c)
   print(:c)
 
-  make_var(:d)
+  var(:d)
   inc(:d, 2)
   dec(:d, 2)
 
@@ -27,10 +27,10 @@ g.bf do
     print(:c)
   end
 
-  make_var(:f)
+  var(:f)
   set(:f, 4)
   set(:c, 'a'.ord)
-  make_var(:c1)
+  var(:c1)
   set(:c1, '1'.ord)
   loop_with(:f) do
     print(:c)
@@ -40,7 +40,10 @@ g.bf do
   end
 
   """
-  while({ |c| })
+
+  times(100) do
+  end
+
   """
 
   set(:a, 13)
@@ -57,6 +60,7 @@ puts ctx
   .to_a
   .map(&:join)
   .join("\n")
+
 int = Interpreter.new(ctx.source)
 int.execute
 

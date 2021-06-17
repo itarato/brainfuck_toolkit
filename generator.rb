@@ -12,7 +12,7 @@ class Generator
       @vars = {}
     end
 
-    def make_var(name)
+    def var(name)
       raise("Var name must be symbol") unless name.is_a?(Symbol)
       
       occuppied = @vars.values
@@ -45,8 +45,9 @@ class Generator
       @mem = mem
     end
 
-    def make_var(name)
-      mem.make_var(name)
+    def var(name, val = 0)
+      mem.var(name)
+      set(name, val) unless val == 0
     end
 
     def go(to)
@@ -182,11 +183,15 @@ class Generator
       counter = gen_var
       set(counter, n)
 
-      bracket(counter) do
-        code_with_ctx(&blk)
+      var(:i)
 
+      bracket(counter) do
+        code_with_ctx(:i, &blk)
         dec(counter)
+        inc(:i)
       end
+
+      mem.free_var(:i)
     end
 
     def loop_with(var, &blk)
@@ -194,7 +199,6 @@ class Generator
 
       bracket(counter) do
         code_with_ctx(&blk)
-
         dec(counter)
       end
 
@@ -243,13 +247,13 @@ class Generator
 
     def gen_var
       name = SecureRandom.hex(12).to_sym
-      make_var(name)
+      var(name)
       name
     end
 
-    def code_with_ctx(&blk)
+    def code_with_ctx(*args, &blk)
       ctx = Context.new(mem)
-      ctx.instance_eval(&blk)
+      ctx.instance_exec(*args, &blk)
       write(ctx.source)
     end
   end
