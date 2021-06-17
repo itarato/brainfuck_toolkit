@@ -4,7 +4,7 @@ require_relative 'interpreter'
 g = Generator.new
 ctx = g.main_ctx
 
-g.code do
+g.bf do
   make_var(:a)
   make_var(:b)
   make_var(:c)

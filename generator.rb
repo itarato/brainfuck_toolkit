@@ -53,9 +53,9 @@ class Generator
       to = mem.var_pos(to)
 
       if mem.ptr < to
-        code(">" * (to - mem.ptr))
+        write(">" * (to - mem.ptr))
       else
-        code("<" * (mem.ptr - to))
+        write("<" * (mem.ptr - to))
       end
       
       mem.ptr = to
@@ -105,17 +105,17 @@ class Generator
 
     def print(dest)
       go(dest)
-      code(".")
+      write(".")
     end
 
     def zero(dest)
       go(dest)
-      code("[-]") # Dec until zero
+      write("[-]") # Dec until zero
     end
 
     def inc(dest, value = 1)
       go(dest)
-      code('+' * value)
+      write('+' * value)
     end
 
     def inc_with(dest, var)
@@ -131,7 +131,7 @@ class Generator
 
     def dec(dest, value = 1)
       go(dest)
-      code('-' * value)
+      write('-' * value)
     end
 
     def dec_with(dest, var)
@@ -148,7 +148,7 @@ class Generator
     def set(dest, value)
       zero(dest)
       go(dest)
-      code("+" * value)
+      write("+" * value)
     end
 
     def callz(cond, &blk)
@@ -161,9 +161,7 @@ class Generator
       end
 
       bracket(temp, just_once: true) do
-        ctx = spawn_ctx
-        ctx.instance_eval(&blk)
-        code(ctx.source) # Execute context
+        code_with_ctx(&blk)
       end
 
       mem.free_var(cond_clone)
@@ -174,9 +172,7 @@ class Generator
       cond_clone = clone_var(cond)
 
       bracket(cond_clone, just_once: true) do
-        ctx = spawn_ctx
-        ctx.instance_eval(&blk)
-        code(ctx.source) # Execute context
+        code_with_ctx(&blk)
       end
 
       mem.free_var(cond_clone)
@@ -187,12 +183,7 @@ class Generator
       set(counter, n)
 
       bracket(counter) do
-        ctx = spawn_ctx
-        # yield(ctx)
-
-        ctx.instance_eval(&blk)
-
-        code(ctx.source)
+        code_with_ctx(&blk)
 
         dec(counter)
       end
@@ -202,9 +193,7 @@ class Generator
       counter = clone_var(var)
 
       bracket(counter) do
-        ctx = spawn_ctx
-        ctx.instance_eval(&blk)
-        code(ctx.source)
+        code_with_ctx(&blk)
 
         dec(counter)
       end
@@ -218,17 +207,17 @@ class Generator
 
     def bracket(var, just_once: false)
       go(var)
-      code("[")
+      write("[")
 
       yield
 
       zero(var) if just_once
 
       go(var)
-      code("]")
+      write("]")
     end
 
-    def code(code_text)
+    def write(code_text)
       @source << code_text
     end
 
@@ -258,8 +247,10 @@ class Generator
       name
     end
 
-    def spawn_ctx
-      Context.new(mem)
+    def code_with_ctx(&blk)
+      ctx = Context.new(mem)
+      ctx.instance_eval(&blk)
+      write(ctx.source)
     end
   end
 
@@ -270,8 +261,9 @@ class Generator
     @main_ctx = Context.new(@mem)
   end
 
-  def code(&blk)
+  def bf(&blk)
     @main_ctx.instance_eval(&blk)
+    @main_ctx
   end
   
   def dump
