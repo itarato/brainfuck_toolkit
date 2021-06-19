@@ -104,6 +104,37 @@ class Generator
       mem.free_var(b_clone)
     end
 
+    def eq?(lhs, rhs)
+      lhs_clone = clone_var(lhs)
+      rhs_clone = clone_var(rhs)
+
+      bracket(lhs_clone) do
+        dec(lhs_clone)
+        dec(rhs_clone)
+      end
+
+      result = gen_var
+      set(result, 1)
+
+      bracket(rhs_clone, just_once: true) do
+        dec(result)
+      end
+
+      mem.free_var(lhs_clone)
+      mem.free_var(rhs_clone)
+
+      result
+    end
+
+    def lt?(lhs, rhs, result)
+"""
+   2,4,x,_,...
+   ^
+[- > -                ]
+
+"""                  
+    end
+
     def print(dest)
       go(dest)
       write(".")

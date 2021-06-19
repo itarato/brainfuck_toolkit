@@ -73,19 +73,21 @@ class Interpreter
   end
 
   def mem_p_inc
+    raise("Not enough memory") if @mem_p >= MEM_SIZE - 1
     @mem_p += 1
   end
 
   def mem_p_dec
+    raise("Incorrect mem pointer") if @mem_p <= 0
     @mem_p -= 1
   end
 
   def mem_inc
-    @mem[@mem_p] += 1
+    @mem[@mem_p] = (@mem[@mem_p] + 1) & 0xFF
   end
 
   def mem_dec
-    @mem[@mem_p] -= 1
+    @mem[@mem_p] = (@mem[@mem_p] - 1) & 0xFF
   end
 
   def mem_print
