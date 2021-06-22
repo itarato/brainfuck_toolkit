@@ -46,8 +46,9 @@ class Generator
     end
 
     def var(name, val = 0)
+      val = val.ord if val.is_a?(String)
       mem.var(name)
-      set(name, val) unless val == 0
+      set(name, val)
     end
 
     def go(to)
@@ -126,18 +127,45 @@ class Generator
       result
     end
 
-    def lt?(lhs, rhs, result)
-"""
-   2,4,x,_,...
-   ^
-[- > -                ]
+    def eq_to?(v_num, value)
+      v_value = gen_var(value)
 
-"""                  
+      result = eq?(v_num, v_value)
+
+      mem.free_var(v_value)
+
+      result
+    end
+
+    def mod(v_num, value)
+      raise("Mod value must be positive non zero") if value < 1
+
+      rem = gen_var
+      clone_v_num = clone_var(v_num)
+
+      bracket(clone_v_num) do
+        inc(rem)
+        calleq_to(rem, value) { zero(rem) }
+        dec(clone_v_num)
+      end
+
+      mem.free_var(clone_v_num)
+
+      rem
     end
 
     def print(dest)
       go(dest)
       write(".")
+    end
+
+    def print_digit(dest)
+      digit = clone_var(dest)
+
+      inc(digit, '0'.ord)
+      go(digit)
+      write(".")
+      mem.free_var(digit)
     end
 
     def zero(dest)
@@ -210,19 +238,39 @@ class Generator
       mem.free_var(cond_clone)
     end
 
+    def calleq(lhs, rhs, &blk)
+      eq_res = eq?(lhs, rhs)
+
+      bracket(eq_res, just_once: true) do
+        code_with_ctx(&blk)
+      end
+
+      mem.free_var(eq_res)
+    end
+
+    def calleq_to(v_num, value, &blk)
+      eq_res = eq_to?(v_num, value)
+
+      bracket(eq_res, just_once: true) do
+        code_with_ctx(&blk)
+      end
+
+      mem.free_var(eq_res)
+    end
+
     def times(n, &blk)
       counter = gen_var
       set(counter, n)
 
-      var(:i)
+      idx = gen_var
 
       bracket(counter) do
-        code_with_ctx(:i, &blk)
+        code_with_ctx(idx, &blk)
         dec(counter)
-        inc(:i)
+        inc(idx)
       end
 
-      mem.free_var(:i)
+      mem.free_var(idx)
     end
 
     def loop_with(var, &blk)
@@ -234,6 +282,10 @@ class Generator
       end
 
       mem.free_var(counter)
+    end
+
+    def debug(message)
+      write("@{#{message}}")
     end
 
     private
@@ -276,9 +328,9 @@ class Generator
       var_clone
     end
 
-    def gen_var
+    def gen_var(value = 0)
       name = SecureRandom.hex(12).to_sym
-      var(name)
+      var(name, value)
       name
     end
 

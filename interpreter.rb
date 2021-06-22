@@ -27,6 +27,7 @@ class Interpreter
       when ',' then mem_read_char
       when '[' then loop_cond_fwd_jump
       when ']' then loop_cond_bwd_jump
+      when '@' then dump_with_message
       end
 
       pc_inc
@@ -35,7 +36,24 @@ class Interpreter
     puts "\n#{'-' * 16}  DONE  #{'-' * 16}"
   end
 
-  def dump
+  def dump_with_message
+    msg = ""
+    pc_inc
+
+    loop do
+      pc_inc
+      
+      break if read_instruction == '}'
+
+      msg << read_instruction
+    end
+
+    dump(msg)
+  end
+
+  def dump(message = "debug")
+    puts "\t<< #{message} >>"
+
     puts "PC: #{@pc}"
     puts "MP: #{@mem_p}"
     

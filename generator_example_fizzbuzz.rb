@@ -3,15 +3,30 @@ require_relative 'interpreter'
 
 gen = Generator.new
 gen.bf do
-  # var(:a, '0'.ord)
-  # times(10) do |i|
-  #   inc_with(:a, :i)
-  #   print(:a)
-  #   dec_with(:a, :i)
-  # end
-  var(:b, 3)
-  var(:c, 4)
-  res = eq?(:b, :c)
+  var(:dot, '.'.ord)
+  var(:f, 'f')
+  var(:i, 'i')
+  var(:z, 'z')
+  var(:b, 'b')
+  var(:u, 'u')
+  times(100) do |i|
+    print(:dot)
+    
+    mod3 = mod(i, 3)
+    callz(mod3) do
+      print(:f)
+      print(:i)
+      print(:z)
+      print(:z)
+    end
+    mod5 = mod(i, 5)
+    callz(mod5) do
+      print(:b)
+      print(:u)
+      print(:z)
+      print(:z)
+    end
+  end
 end
 
 ctx = gen.main_ctx
@@ -27,5 +42,5 @@ puts ctx
 int = Interpreter.new(ctx.source)
 int.execute
 
-puts int.dump
-puts gen.dump
+int.dump
+gen.dump
