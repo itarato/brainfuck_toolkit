@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'forwardable'
 
 class Generator
   attr_reader(:source)
@@ -27,7 +28,7 @@ class Generator
       end
     end
 
-    def free_var(name)
+    def free(name)
       @vars.delete(name)
     end
 
@@ -38,7 +39,11 @@ class Generator
   end
 
   class Context
+    extend(Forwardable)
+    
     attr_reader(:source)
+
+    def_delegators(:@mem, :free)
 
     def initialize(mem)
       @source = ""
@@ -46,7 +51,6 @@ class Generator
     end
 
     def var(name, val = 0)
-      val = val.ord if val.is_a?(String)
       mem.var(name)
       set(name, val)
     end
@@ -83,8 +87,8 @@ class Generator
         inc(dest)
       end
 
-      mem.free_var(a_clone)
-      mem.free_var(b_clone)
+      free(a_clone)
+      free(b_clone)
     end
 
     def mul(a, b, dest)
@@ -101,8 +105,8 @@ class Generator
         inc_with(dest, b_clone)
       end
 
-      mem.free_var(a_clone)
-      mem.free_var(b_clone)
+      free(a_clone)
+      free(b_clone)
     end
 
     def eq?(lhs, rhs)
@@ -121,8 +125,8 @@ class Generator
         dec(result)
       end
 
-      mem.free_var(lhs_clone)
-      mem.free_var(rhs_clone)
+      free(lhs_clone)
+      free(rhs_clone)
 
       result
     end
@@ -132,7 +136,7 @@ class Generator
 
       result = eq?(v_num, v_value)
 
-      mem.free_var(v_value)
+      free(v_value)
 
       result
     end
@@ -149,7 +153,7 @@ class Generator
         dec(clone_v_num)
       end
 
-      mem.free_var(clone_v_num)
+      free(clone_v_num)
 
       rem
     end
@@ -165,7 +169,7 @@ class Generator
       inc(digit, '0'.ord)
       go(digit)
       write(".")
-      mem.free_var(digit)
+      free(digit)
     end
 
     def zero(dest)
@@ -186,7 +190,7 @@ class Generator
         dec(acc)
       end
 
-      mem.free_var(acc)
+      free(acc)
     end
 
     def dec(dest, value = 1)
@@ -202,12 +206,14 @@ class Generator
         dec(acc)
       end
 
-      mem.free_var(acc)
+      free(acc)
     end
 
     def set(dest, value)
       zero(dest)
       go(dest)
+
+      value = value.ord if value.is_a?(String)
       write("+" * value)
     end
 
@@ -224,8 +230,8 @@ class Generator
         code_with_ctx(&blk)
       end
 
-      mem.free_var(cond_clone)
-      mem.free_var(temp)
+      free(cond_clone)
+      free(temp)
     end
 
     def callnz(cond, &blk)
@@ -235,7 +241,7 @@ class Generator
         code_with_ctx(&blk)
       end
 
-      mem.free_var(cond_clone)
+      free(cond_clone)
     end
 
     def calleq(lhs, rhs, &blk)
@@ -245,7 +251,7 @@ class Generator
         code_with_ctx(&blk)
       end
 
-      mem.free_var(eq_res)
+      free(eq_res)
     end
 
     def calleq_to(v_num, value, &blk)
@@ -255,7 +261,7 @@ class Generator
         code_with_ctx(&blk)
       end
 
-      mem.free_var(eq_res)
+      free(eq_res)
     end
 
     def times(n, &blk)
@@ -270,7 +276,7 @@ class Generator
         inc(idx)
       end
 
-      mem.free_var(idx)
+      free(idx)
     end
 
     def loop_with(var, &blk)
@@ -281,7 +287,7 @@ class Generator
         dec(counter)
       end
 
-      mem.free_var(counter)
+      free(counter)
     end
 
     def debug(message)
@@ -323,7 +329,7 @@ class Generator
         dec(temp)
       end
 
-      mem.free_var(temp)
+      free(temp)
 
       var_clone
     end
