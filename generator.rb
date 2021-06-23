@@ -38,9 +38,15 @@ class Generator
     end
   end
 
+  #
+  # Code block. Can be single or multi (re)use.
+  #
   class Context
     extend(Forwardable)
     
+    #
+    # Generated Brainfuck source code.
+    #
     attr_reader(:source)
 
     def_delegators(:@mem, :free)
@@ -50,11 +56,17 @@ class Generator
       @mem = mem
     end
 
+    #
+    # Create new variable with value.
+    #
     def var(name, val = 0)
       mem.var(name)
       set(name, val)
     end
 
+    #
+    # Set an active variable (= set mem pointer to var).
+    #
     def go(to)
       to = mem.var_pos(to)
 
@@ -293,6 +305,17 @@ class Generator
     def debug(message)
       write("@{#{message}}")
     end
+
+    # def new_ctx(*args, &blk)
+    #   ctx = Context.new(mem)
+    #   ctx.instance_exec(*args, &blk)
+    #   ctx
+    #   # write(ctx.source)
+    # end
+
+    # def exec(ctx)
+    #   write(ctx.source)
+    # end
 
     private
 
