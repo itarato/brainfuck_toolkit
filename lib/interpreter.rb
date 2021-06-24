@@ -14,16 +14,14 @@ class Interpreter
     @bracket_goto_map = setup_bracket_goto_map
   end
 
-  def execute
-    puts "#{'-' * 16} SCREEN #{'-' * 16}"
-
+  def execute(screen)
     while !complete?
       case (instruction = read_instruction)
       when '>' then mem_p_inc
       when '<' then mem_p_dec
       when '+' then mem_inc
       when '-' then mem_dec
-      when '.' then mem_print
+      when '.' then mem_print(screen)
       when ',' then mem_read_char
       when '[' then loop_cond_fwd_jump
       when ']' then loop_cond_bwd_jump
@@ -32,8 +30,6 @@ class Interpreter
 
       pc_inc
     end
-
-    puts "\n#{'-' * 16}  DONE  #{'-' * 16}"
   end
 
   def dump_with_message
@@ -108,9 +104,10 @@ class Interpreter
     @mem[@mem_p] = (@mem[@mem_p] - 1) & 0xFF
   end
 
-  def mem_print
-    print(@mem[@mem_p].chr)
-    STDOUT.flush
+  def mem_print(screen)
+    screen << @mem[@mem_p].chr
+    # print(@mem[@mem_p].chr)
+    # STDOUT.flush
   end
 
   def mem_read_char

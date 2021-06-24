@@ -39,7 +39,7 @@ class Generator
   end
 
   #
-  # Code block. Can be single or multi (re)use.
+  # Code block context - only single use and always (must be) written immediately.
   #
   class Context
     extend(Forwardable)
@@ -62,21 +62,6 @@ class Generator
     def var(name, val = 0)
       mem.var(name)
       set(name, val)
-    end
-
-    #
-    # Set an active variable (= set mem pointer to var).
-    #
-    def go(to)
-      to = mem.var_pos(to)
-
-      if mem.ptr < to
-        write(">" * (to - mem.ptr))
-      else
-        write("<" * (mem.ptr - to))
-      end
-      
-      mem.ptr = to
     end
 
     def add(a, b, dest)
@@ -306,20 +291,33 @@ class Generator
       write("@{#{message}}")
     end
 
-    # def new_ctx(*args, &blk)
-    #   ctx = Context.new(mem)
-    #   ctx.instance_exec(*args, &blk)
-    #   ctx
-    #   # write(ctx.source)
-    # end
-
-    # def exec(ctx)
-    #   write(ctx.source)
-    # end
+    #
+    # Executes a block in a new context.
+    #
+    def exec(&blk)
+      ctx = Context.new(mem)
+      ctx.instance_exec(&blk)
+      write(ctx.source)
+    end
 
     private
 
     attr_reader(:mem)
+    
+    #
+    # Set an active variable (= set mem pointer to var).
+    #
+    def go(to)
+      to = mem.var_pos(to)
+
+      if mem.ptr < to
+        write(">" * (to - mem.ptr))
+      else
+        write("<" * (mem.ptr - to))
+      end
+      
+      mem.ptr = to
+    end
 
     def bracket(var, just_once: false)
       go(var)
