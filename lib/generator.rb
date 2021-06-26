@@ -62,48 +62,53 @@ class Generator
     def var(name, val = 0)
       mem.var(name)
       set(name, val)
+      name
     end
 
-    def add(a, b, dest)
-      if a == b || a == dest || b == dest
-        raise("Sources and destination must be different")
-      end
+    def add(a, b)
+      raise("Sources and destination must be different") if a == b
+
+      result = gen_var
 
       a_clone = clone_var(a)
       b_clone = clone_var(b)
 
-      zero(dest)
+      zero(result)
 
       bracket(a_clone) do
         dec(a_clone)
-        inc(dest)
+        inc(result)
       end
 
       bracket(b_clone) do
         dec(b_clone)
-        inc(dest)
+        inc(result)
       end
 
       free(a_clone)
       free(b_clone)
+
+      result
     end
 
-    def mul(a, b, dest)
-      if a == b || a == dest || b == dest
-        raise("Sources and destination must be different")
-      end
+    def mul(a, b)
+      raise("Sources and destination must be different") if a == b
+
+      result = gen_var
 
       a_clone = clone_var(a)
       b_clone = clone_var(b)
 
-      zero(dest)
+      zero(result)
 
       loop_with(a_clone) do
-        inc_with(dest, b_clone)
+        inc_with(result, b_clone)
       end
 
       free(a_clone)
       free(b_clone)
+
+      result
     end
 
     def eq?(lhs, rhs)
