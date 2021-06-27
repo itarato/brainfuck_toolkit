@@ -233,6 +233,14 @@ class TestMeme < Minitest::Test
     end
   end
 
+  def test_times
+    assert_equal("0123") do
+      times(4) do |i|
+        print_digit(i)
+      end
+    end
+  end
+
   private
 
   def interpret_code(&blk)
