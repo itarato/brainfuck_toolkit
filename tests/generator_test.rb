@@ -6,95 +6,87 @@ require_relative "../lib/interpreter"
 class TestMeme < Minitest::Test
   def test_variables
     assert_produces("*\u0000x") do
-      var(:x, 42)
-      var(:y)
-      var(:z, 'x')
+      x = byte(42)
+      y = byte
+      z = byte('x')
 
-      print(:x)
-      print(:y)
-      print(:z)
-    end
-  end
-
-  def test_bad_var_name
-    assert_raises do
-      interpret_code do
-        var("notsymbol")
-      end
+      print(x)
+      print(y)
+      print(z)
     end
   end
 
   def test_add
     assert_produces("F") do
-      var(:a, 'A')
-      var(:b, 5)
-      res = add(:a, :b)
+      a = byte('A')
+      b = byte(5)
+      res = add(a, b)
       print(res)
     end
   end
 
   def test_mul
     assert_produces("H") do
-      var(:a, 8)
-      var(:b, 9)
-      res = mul(:a, :b)
+      a = byte(8)
+      b = byte(9)
+      res = mul(a, b)
       print(res)
     end
   end
 
   def test_eq
     assert_produces("1") do
-      var(:a, 4)
-      var(:b, 4)
-      res = eq?(:a, :b)
+      a = byte(4)
+      b = byte(4)
+      res = eq?(a, b)
       print_digit(res)
     end
 
     assert_produces("0") do
-      var(:a, 4)
-      var(:b, 8)
-      res = eq?(:a, :b)
+      a = byte(4)
+      b = byte(8)
+      res = eq?(a, b)
       print_digit(res)
     end
   end
 
   def test_eq_to
     assert_produces("1") do
-      var(:a, 4)
-      res = eq_to?(:a, 4)
+      a = byte(4)
+      res = eq_to?(a, 4)
       print_digit(res)
     end
 
     assert_produces("0") do
-      var(:a, 4)
-      res = eq_to?(:a, 7)
+      a = byte(4)
+      res = eq_to?(a, 7)
       print_digit(res)
     end
   end
 
   def test_mod
     assert_produces("2") do
-      var(:a, 17)
-      res = mod(:a, 5)
+      a = byte(17)
+      res = mod(a, 5)
       print_digit(res)
     end
 
     assert_produces("0") do
-      var(:a, 15)
-      res = mod(:a, 5)
+      a = byte(15)
+      res = mod(a, 5)
       print_digit(res)
     end
   end
 
   def test_print
     assert_produces("meme") do
-      var(:m, 'm')
-      var(:e, 'e')
+      m = byte('m')
+      e = byte('e')
 
-      print(:m)
-      print(:e)
-      print(:m)
-      print(:e)
+      print(m)
+      print(e)
+      print(m)
+      print(e)
     end
   end
 
@@ -108,19 +100,136 @@ class TestMeme < Minitest::Test
 
   def test_zero
     assert_produces("x0") do
-      var(:a, 'x')
-      print(:a)
+      a = byte('x')
+      print(a)
 
-      zero(:a)
-      print_digit(:a)
+      zero(a)
+      print_digit(a)
+    end
+  end
+
+  def test_alloc
+    assert_produces("why") do
+      arr = alloc(3)
+      set_arr(arr, "why")
+      print_arr(arr)
     end
   end
 
   def test_inc
     assert_produces("B") do
-      var(:a, 'A')
-      inc(:a)
-      print(:a)
+      a = byte('A')
+      inc(a)
+      print(a)
+    end
+  end
+
+  def test_inc_with
+    assert_produces("R") do
+      a = byte('P')
+      b = byte(2)
+      inc_with(a, b)
+      print(a)
+    end
+  end
+
+  def test_dec
+    assert_produces("A") do
+      a = byte('B')
+      dec(a)
+      print(a)
+    end
+  end
+
+  def test_dec_with
+    assert_produces("P") do
+      a = byte('R')
+      b = byte(2)
+      dec_with(a, b)
+      print(a)
+    end
+  end
+
+  def test_set
+    assert_produces("\u0000x") do
+      a = byte
+      print(a)
+      set(a, 'x')
+      print(a)
+    end
+  end
+
+  def test_callz
+    assert_produces("x") do
+      a = byte
+      b = byte('x')
+      callz(a) do
+        print(b)
+      end
+    end
+
+    assert_produces("") do
+      a = byte(1)
+      b = byte('x')
+      callz(a) do
+        print(b)
+      end
+    end
+  end
+
+  def test_callnz
+    assert_produces("") do
+      a = byte
+      b = byte('x')
+      callnz(a) do
+        print(b)
+      end
+    end
+
+    assert_produces("x") do
+      a = byte(1)
+      b = byte('x')
+      callnz(a) do
+        print(b)
+      end
+    end
+  end
+
+  def test_calleq
+    assert_produces("x") do
+      a = byte(5)
+      b = byte(5)
+      c = byte('x')
+      calleq(a, b) do
+        print(c)
+      end
+    end
+
+    assert_produces("") do
+      a = byte(5)
+      b = byte(7)
+      c = byte('x')
+      calleq(a, b) do
+        print(c)
+      end
+    end
+  end
+
+  def test_calleq_to
+    assert_produces("x") do
+      a = byte(5)
+      c = byte('x')
+      calleq_to(a, 5) do
+        print(c)
+      end
+    end
+
+    assert_produces("") do
+      a = byte(5)
+      c = byte('x')
+      calleq_to(a, 7) do
+        print(c)
+      end
     end
   end
 

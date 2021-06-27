@@ -1,4 +1,3 @@
-require 'securerandom'
 require 'forwardable'
 
 class Generator
@@ -11,21 +10,29 @@ class Generator
     def initialize
       @ptr = 0
       @vars = {}
+      @name_counter = 0
     end
 
-    def var(name)
-      raise("Var name must be symbol") unless name.is_a?(Symbol)
+    def alloc_byte(name = nil)
+      name ||= generate_variable_name
+      raise("Duplicated variable #{name}") if @vars.key?(name)
       
-      occuppied = @vars.values
-      idx = -1
-      
-      loop do
-        idx += 1
-        next if occuppied.include?(idx)
+      @vars[name] = find_free_segment(1)
 
-        @vars[name] = idx
-        return idx
+      name
+    end
+
+    def alloc(size)
+      raise("Empty allocation") if size <= 0
+
+      start = find_free_segment(size)
+      var_names = size.times.map do |i|
+        name = generate_variable_name
+        @vars[name] = start + i
+        name
       end
+      
+      Allocation.new(size, var_names)
     end
 
     def free(name)
@@ -35,6 +42,53 @@ class Generator
     def var_pos(name)
       raise("Var does not exist: #{name}") unless @vars.key?(name)
       @vars[name]
+    end
+
+    private
+
+    def generate_variable_name
+      name = "var#{@name_counter}"
+      @name_counter += 1
+      name
+    end
+
+    def find_free_segment(size)
+      occuppied = @vars.values.sort
+
+      start = nil
+
+      if occuppied.empty? || occuppied[0] >= size
+        start = 0
+      else
+        (occuppied.size - 1).times do |i|
+          if occuppied[i + 1] - occuppied[i] > size
+            start = occuppied[i] + 1
+            break
+          end
+        end
+
+        start ||= occuppied[-1] + 1
+      end
+
+      start
+    end
+  end
+
+  class Allocation
+    attr_reader(:size)
+
+    def initialize(size, names)
+      @size = size
+      @names = names
+    end
+
+    def head
+      @names[0]
+    end
+
+    def [](i)
+      raise("Index out of bounds (size=#{size})") if i < 0 || i >= size
+      @names[i]
     end
   end
 
@@ -59,10 +113,14 @@ class Generator
     #
     # Create new variable with value.
     #
-    def var(name, val = 0)
-      mem.var(name)
+    def byte(val = 0, name: nil)
+      name = mem.alloc_byte(name)
       set(name, val)
       name
+    end
+
+    def alloc(size)
+      mem.alloc(size)
     end
 
     def add(a, b)
@@ -165,6 +223,14 @@ class Generator
       write(".")
     end
 
+    def print_arr(arr)
+      raise("Input must be an #{Allocation.name}") unless arr.is_a?(Allocation)
+
+      arr.size.times do |i|
+        print(arr[i])
+      end
+    end
+
     def print_digit(dest)
       digit = clone_var(dest)
 
@@ -217,6 +283,15 @@ class Generator
 
       value = value.ord if value.is_a?(String)
       write("+" * value)
+    end
+
+    def set_arr(arr, value)
+      raise("Input must be an #{Allocation.name}") unless arr.is_a?(Allocation)
+      raise("Value does not fit to array") unless arr.size >= value.size
+
+      value.chars.each_with_index do |ch, i|
+        set(arr[i], ch)
+      end
     end
 
     def callz(cond, &blk)
@@ -361,9 +436,7 @@ class Generator
     end
 
     def gen_var(value = 0)
-      name = SecureRandom.hex(12).to_sym
-      var(name, value)
-      name
+      byte(value)
     end
 
     def code_with_ctx(*args, &blk)
