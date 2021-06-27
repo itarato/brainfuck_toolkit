@@ -234,10 +234,50 @@ class TestMeme < Minitest::Test
   end
 
   def test_times
-    assert_equal("0123") do
+    assert_produces("0123") do
       times(4) do |i|
         print_digit(i)
       end
+    end
+  end
+
+  def test_loop_with
+    assert_produces("****") do
+      i = byte(4)
+      a = byte('*')
+      loop_with(i) do
+        print(a)
+      end
+    end
+  end
+
+  def test_exec
+    assert_produces("xoxo") do
+      a = byte('x')
+      blk = -> {
+        b = byte('o')
+        print(b)
+      }
+
+      print(a)
+      exec(&blk)
+      print(a)
+      exec(&blk)
+    end
+  end
+
+  def test_conditional_blocks_do_not_mess_up_memory_location
+    assert_produces("xxy") do
+      a = byte('x')
+      b = byte('y')
+      c = byte
+
+      callz(c) { print(a) } # -> x
+      inc(c)
+      callz(c) { print(b) } # -> nothing
+
+      print(a) # -> x
+      print(b) # -> y
     end
   end
 
