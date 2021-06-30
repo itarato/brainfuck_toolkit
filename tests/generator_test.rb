@@ -64,16 +64,16 @@ class TestMeme < Minitest::Test
     end
   end
 
-  def test_mod
+  def test_mod_with
     assert_produces("2") do
       a = byte(17)
-      res = mod(a, 5)
+      res = mod_with(a, 5)
       print_digit(res)
     end
 
     assert_produces("0") do
       a = byte(15)
-      res = mod(a, 5)
+      res = mod_with(a, 5)
       print_digit(res)
     end
   end
@@ -278,6 +278,155 @@ class TestMeme < Minitest::Test
 
       print(a) # -> x
       print(b) # -> y
+    end
+  end
+
+  def test_div_with
+    assert_produces("6") do
+      dividend = byte(125)
+      res = div_with(dividend, 20)
+      print_digit(res)
+    end
+
+    assert_produces("6") do
+      dividend = byte(120)
+      res = div_with(dividend, 20)
+      print_digit(res)
+    end
+    
+    assert_produces("5") do
+      dividend = byte(119)
+      res = div_with(dividend, 20)
+      print_digit(res)
+    end
+
+    assert_produces("0") do
+      dividend = byte(19)
+      res = div_with(dividend, 20)
+      print_digit(res)
+    end
+
+    assert_produces("0") do
+      dividend = byte(0)
+      res = div_with(dividend, 20)
+      print_digit(res)
+    end
+  end
+
+  def test_print_decimal
+    assert_produces("123") do
+      x = byte(123)
+      print_decimal(x)
+    end
+
+    assert_produces("23") do
+      x = byte(23)
+      print_decimal(x)
+    end
+
+    assert_produces("203") do
+      x = byte(203)
+      print_decimal(x)
+    end
+
+    assert_produces("200") do
+      x = byte(200)
+      print_decimal(x)
+    end
+
+    assert_produces("30") do
+      x = byte(30)
+      print_decimal(x)
+    end
+
+    assert_produces("5") do
+      x = byte(5)
+      print_decimal(x)
+    end
+
+    assert_produces("0") do
+      x = byte
+      print_decimal(x)
+    end
+  end
+
+  def test_lt
+    assert_produces("1") do
+      x = byte(32)
+      y = byte(33)
+      print_digit(lt?(x, y))
+    end
+
+    assert_produces("0") do
+      x = byte(32)
+      y = byte(32)
+      print_digit(lt?(x, y))
+    end
+    
+    assert_produces("0") do
+      x = byte(32)
+      y = byte(30)
+      print_digit(lt?(x, y))
+    end
+  end
+
+  def test_gt
+    assert_produces("0") do
+      x = byte(32)
+      y = byte(33)
+      print_digit(gt?(x, y))
+    end
+
+    assert_produces("0") do
+      x = byte(32)
+      y = byte(32)
+      print_digit(gt?(x, y))
+    end
+    
+    assert_produces("1") do
+      x = byte(32)
+      y = byte(30)
+      print_digit(gt?(x, y))
+    end
+  end
+
+  def test_lte
+    assert_produces("1") do
+      x = byte(32)
+      y = byte(33)
+      print_digit(lte?(x, y))
+    end
+
+    assert_produces("1") do
+      x = byte(32)
+      y = byte(32)
+      print_digit(lte?(x, y))
+    end
+    
+    assert_produces("0") do
+      x = byte(32)
+      y = byte(30)
+      print_digit(lte?(x, y))
+    end
+  end
+
+  def test_gte
+    assert_produces("0") do
+      x = byte(32)
+      y = byte(33)
+      print_digit(gte?(x, y))
+    end
+
+    assert_produces("1") do
+      x = byte(32)
+      y = byte(32)
+      print_digit(gte?(x, y))
+    end
+    
+    assert_produces("1") do
+      x = byte(32)
+      y = byte(30)
+      print_digit(gte?(x, y))
     end
   end
 

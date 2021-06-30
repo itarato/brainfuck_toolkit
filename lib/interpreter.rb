@@ -106,15 +106,16 @@ class Interpreter
 
   def mem_print(screen)
     screen << @mem[@mem_p].chr
-    # print(@mem[@mem_p].chr)
-    # STDOUT.flush
   end
 
   def mem_read_char
-    puts "?>"
-    system('stty raw -echo')
-    @mem[@mem_p] = STDIN.getc.ord
-    system('stty -raw echo')
+    print("?>")
+    input = STDIN.readline.strip
+    @mem[@mem_p] = if input.size > 1 || input =~ /^[0-9]{1,3}$/
+      input.to_i
+    else
+      input[0].ord
+    end
   end
 
   def loop_cond_fwd_jump

@@ -191,6 +191,104 @@ class Generator
       result
     end
 
+    def lt?(lhs, rhs)
+      lhs_clone = clone_var(lhs)
+      rhs_clone = clone_var(rhs)
+
+      result = byte
+
+      # Hack to skip ops and return false when eq.
+      calleq(lhs, rhs) do
+        zero(rhs_clone)
+      end
+
+      bracket(rhs_clone) do
+        dec(rhs_clone)
+        dec(lhs_clone)
+
+        callz(lhs_clone) { inc(result) }
+      end
+
+      free(lhs_clone)
+      free(rhs_clone)
+
+      result
+    end
+
+    def gt?(lhs, rhs)
+      lhs_clone = clone_var(lhs)
+      rhs_clone = clone_var(rhs)
+
+      result = byte
+
+      # Hack to skip ops and return false when eq.
+      calleq(lhs, rhs) do
+        zero(lhs_clone)
+      end
+
+      bracket(lhs_clone) do
+        dec(rhs_clone)
+        dec(lhs_clone)
+
+        callz(rhs_clone) { inc(result) }
+      end
+
+      free(lhs_clone)
+      free(rhs_clone)
+
+      result
+    end
+
+    def lte?(lhs, rhs)
+      lhs_clone = clone_var(lhs)
+      rhs_clone = clone_var(rhs)
+
+      result = byte
+
+      # Hack to skip ops and return true when eq.
+      calleq(lhs, rhs) do
+        zero(rhs_clone)
+        inc(result)
+      end
+
+      bracket(rhs_clone) do
+        dec(rhs_clone)
+        dec(lhs_clone)
+
+        callz(lhs_clone) { inc(result) }
+      end
+
+      free(lhs_clone)
+      free(rhs_clone)
+
+      result
+    end
+
+    def gte?(lhs, rhs)
+      lhs_clone = clone_var(lhs)
+      rhs_clone = clone_var(rhs)
+
+      result = byte
+
+      # Hack to skip ops and return true when eq.
+      calleq(lhs, rhs) do
+        zero(lhs_clone)
+        inc(result)
+      end
+
+      bracket(lhs_clone) do
+        dec(rhs_clone)
+        dec(lhs_clone)
+
+        callz(rhs_clone) { inc(result) }
+      end
+
+      free(lhs_clone)
+      free(rhs_clone)
+
+      result
+    end
+
     def eq_to?(v_num, value)
       v_value = gen_var(value)
 
@@ -201,7 +299,7 @@ class Generator
       result
     end
 
-    def mod(v_num, value)
+    def mod_with(v_num, value)
       raise("Mod value must be positive non zero") if value < 1
 
       rem = gen_var
@@ -240,6 +338,40 @@ class Generator
       free(digit)
     end
 
+    def div_with(v_dividend, divisor)
+      counter = byte
+      v_clone_dividend = clone_var(v_dividend)
+      divisor_helper = byte
+      
+      bracket(v_clone_dividend) do
+        dec(v_clone_dividend)
+        inc(divisor_helper)
+        
+        calleq_to(divisor_helper, divisor) do
+          zero(divisor_helper)
+          inc(counter)
+        end
+      end
+
+      free(v_clone_dividend)
+      free(divisor_helper)
+
+      counter
+    end
+
+    def print_decimal(var)
+      hundreds = div_with(var, 100)
+      _tens = mod_with(var, 100)
+      tens = div_with(_tens, 10)
+      ones = mod_with(var, 10)
+
+      hundreds_and_tens = add(hundreds, tens)
+
+      callnz(hundreds) { print_digit(hundreds) }
+      callnz(hundreds_and_tens) { print_digit(tens) }
+      print_digit(ones)
+    end
+
     def zero(dest)
       go(dest)
       write("[-]") # Dec until zero
@@ -266,6 +398,7 @@ class Generator
       write('-' * value)
     end
 
+    # Todo: *_with should be the value version - or find a consistent way!
     def dec_with(dest, var)
       acc = clone_var(var)
 
@@ -378,6 +511,13 @@ class Generator
       ctx = Context.new(mem)
       ctx.instance_exec(&blk)
       write(ctx.source)
+    end
+
+    def read_byte
+      out = byte
+      go(out)
+      write(",")
+      out
     end
 
     private

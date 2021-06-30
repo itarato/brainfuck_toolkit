@@ -1,56 +1,29 @@
-require_relative 'generator'
-require_relative 'interpreter'
+require_relative '../lib/generator'
+require_relative '../lib/interpreter'
 
 g = Generator.new
 ctx = g.main_ctx
 
 g.bf do
-  var(:a)
-  var(:b)
-  var(:c)
+  grapes_quantity = read_byte
+  apples_quantity = read_byte
+  peaches_quantity = read_byte
 
-  set(:a, 20)
-  set(:b, 20)
-  add(:a, :b, :c)
-  print(:c)
+  grapes_price = byte(5)
+  apples_price = byte(3)
+  peaches_price = byte(7)
 
-  var(:d)
-  inc(:d, 2)
-  dec(:d, 2)
+  grapes_free_quantity = div_with(grapes_quantity, 2)
+  dec_with(grapes_quantity, grapes_free_quantity)
 
-  callz(:d) do
-    inc(:c, 2)
-    inc(:a)
-  end
+  grapes_total = mul(grapes_quantity, grapes_price)
+  apples_total = mul(apples_quantity, apples_price)
+  peaches_total = mul(peaches_quantity, peaches_price)
 
-  times(4) do
-    print(:c)
-  end
-
-  var(:f)
-  set(:f, 4)
-  set(:c, 'a'.ord)
-  var(:c1)
-  set(:c1, '1'.ord)
-  loop_with(:f) do
-    print(:c)
-    times(3) do
-      print(:c1)
-    end
-  end
-
-  """
-
-  times(100) do
-  end
-
-  """
-
-  set(:a, 13)
-
-  set(:b, 6)
-  mul(:a, :b, :c)
-  print(:c)
+  total = add(grapes_total, apples_total)
+  total = add(total, peaches_total)
+  
+  print_decimal(total)
 end
 
 puts ctx
@@ -61,8 +34,11 @@ puts ctx
   .map(&:join)
   .join("\n")
 
+out = ""
 int = Interpreter.new(ctx.source)
-int.execute
+int.execute(out)
+
+puts out
 
 # g.dump
 # int.dump
