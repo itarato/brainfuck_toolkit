@@ -1,5 +1,6 @@
 require_relative '../lib/generator'
 require_relative '../lib/interpreter'
+require_relative '../scripts/pretty_printer'
 
 g = Generator.new
 ctx = g.main_ctx
@@ -20,19 +21,19 @@ g.bf do
   apples_total = mul(apples_quantity, apples_price)
   peaches_total = mul(peaches_quantity, peaches_price)
 
+  apples_discount_min = byte(2)
+  callnz(gte?(apples_quantity, apples_discount_min)) do
+    apples_total = div_with(apples_total, 5)
+    apples_total = mul(apples_total, byte(4))
+  end
+
   total = add(grapes_total, apples_total)
   total = add(total, peaches_total)
   
   print_decimal(total)
 end
 
-puts ctx
-  .source
-  .chars
-  .each_slice(32)
-  .to_a
-  .map(&:join)
-  .join("\n")
+PrettyPrinter.pretty_print(ctx.source)
 
 out = ""
 int = Interpreter.new(ctx.source)
