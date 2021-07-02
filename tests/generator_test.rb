@@ -98,6 +98,11 @@ class TestMeme < Minitest::Test
       print(m)
       print(e)
     end
+
+    assert_produces("hi") do
+      print('h')
+      print('i')
+    end
   end
 
   def test_print_digit
@@ -105,6 +110,10 @@ class TestMeme < Minitest::Test
       times(10) do |i|
         print_digit(i)
       end
+    end
+
+    assert_produces("7") do
+      print_digit(7)
     end
   end
 
@@ -287,34 +296,34 @@ class TestMeme < Minitest::Test
     end
   end
 
-  def test_div_with
+  def test_div
     assert_produces("6") do
       dividend = byte(125)
-      res = div_with(dividend, 20)
+      res = div(dividend, 20)
       print_digit(res)
     end
 
     assert_produces("6") do
       dividend = byte(120)
-      res = div_with(dividend, 20)
+      res = div(dividend, 20)
       print_digit(res)
     end
     
     assert_produces("5") do
       dividend = byte(119)
-      res = div_with(dividend, 20)
+      res = div(dividend, 20)
       print_digit(res)
     end
 
     assert_produces("0") do
       dividend = byte(19)
-      res = div_with(dividend, 20)
+      res = div(dividend, 20)
       print_digit(res)
     end
 
     assert_produces("0") do
       dividend = byte(0)
-      res = div_with(dividend, 20)
+      res = div(dividend, 20)
       print_digit(res)
     end
   end

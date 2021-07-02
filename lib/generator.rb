@@ -282,48 +282,55 @@ class Generator
       raise("Mod value must be positive non zero") if divisor < 1
 
       rem = byte
-      clone_v_num = clone_input(dividend)
+      clone_dividend = clone_input(dividend)
 
-      bracket(clone_v_num) do
+      bracket(clone_dividend) do
         inc(rem)
         calleq(rem, divisor) { zero(rem) }
-        dec(clone_v_num)
+        dec(clone_dividend)
       end
 
-      free(clone_v_num)
+      free(clone_dividend)
 
       rem
     end
 
-    def print(dest)
-      go(dest)
-      write(".")
+    def print(v)
+      if variable?(v)
+        go(v)
+        write(".")
+      else
+        _v = byte(v)
+        go(_v)
+        write(".")
+
+        free(_v)
+      end
     end
 
     def print_arr(arr)
       raise("Input must be an #{Allocation.name}") unless arr.is_a?(Allocation)
 
-      arr.size.times do |i|
-        print(arr[i])
-      end
+      arr.size.times { |i| print(arr[i]) }
     end
 
-    def print_digit(dest)
-      digit = clone_var(dest)
+    def print_digit(v)
+      v_clone = clone_input(v)
 
-      inc(digit, '0'.ord)
-      go(digit)
+      inc(v_clone, '0'.ord)
+      go(v_clone)
       write(".")
-      free(digit)
+
+      free(v_clone)
     end
 
-    def div_with(v_dividend, divisor)
+    def div(dividend, divisor)
       counter = byte
-      v_clone_dividend = clone_var(v_dividend)
+      clone_dividend = clone_input(dividend)
       divisor_helper = byte
       
-      bracket(v_clone_dividend) do
-        dec(v_clone_dividend)
+      bracket(clone_dividend) do
+        dec(clone_dividend)
         inc(divisor_helper)
         
         calleq(divisor_helper, divisor) do
@@ -332,16 +339,16 @@ class Generator
         end
       end
 
-      free(v_clone_dividend)
+      free(clone_dividend)
       free(divisor_helper)
 
       counter
     end
 
     def print_decimal(var)
-      hundreds = div_with(var, 100)
+      hundreds = div(var, 100)
       _tens = mod(var, 100)
-      tens = div_with(_tens, 10)
+      tens = div(_tens, 10)
       ones = mod(var, 10)
 
       hundreds_and_tens = add(hundreds, tens)

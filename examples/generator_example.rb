@@ -14,7 +14,7 @@ g.bf do
   apples_price = byte(3)
   peaches_price = byte(7)
 
-  grapes_free_quantity = div_with(grapes_quantity, 2)
+  grapes_free_quantity = div(grapes_quantity, 2)
   dec_with(grapes_quantity, grapes_free_quantity)
 
   grapes_total = mul(grapes_quantity, grapes_price)
@@ -23,7 +23,7 @@ g.bf do
 
   apples_discount_min = byte(2)
   callnz(gte?(apples_quantity, apples_discount_min)) do
-    apples_total = div_with(apples_total, 5)
+    apples_total = div(apples_total, 5)
     apples_total = mul(apples_total, byte(4))
   end
 
