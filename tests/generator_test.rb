@@ -23,6 +23,12 @@ class TestMeme < Minitest::Test
       res = add(a, b)
       print(res)
     end
+
+    assert_produces("F") do
+      a = byte('A')
+      res = add(5, a)
+      print(res)
+    end
   end
 
   def test_mul
@@ -30,6 +36,12 @@ class TestMeme < Minitest::Test
       a = byte(8)
       b = byte(9)
       res = mul(a, b)
+      print(res)
+    end
+    
+    assert_produces("H") do
+      b = byte(8)
+      res = mul(9, b)
       print(res)
     end
   end
@@ -48,32 +60,30 @@ class TestMeme < Minitest::Test
       res = eq?(a, b)
       print_digit(res)
     end
-  end
 
-  def test_eq_to
     assert_produces("1") do
       a = byte(4)
-      res = eq_to?(a, 4)
+      res = eq?(a, 4)
       print_digit(res)
     end
 
     assert_produces("0") do
       a = byte(4)
-      res = eq_to?(a, 7)
+      res = eq?(a, 7)
       print_digit(res)
     end
   end
 
-  def test_mod_with
+  def test_mod
     assert_produces("2") do
       a = byte(17)
-      res = mod_with(a, 5)
+      res = mod(a, 5)
       print_digit(res)
     end
 
     assert_produces("0") do
       a = byte(15)
-      res = mod_with(a, 5)
+      res = mod(a, 5)
       print_digit(res)
     end
   end
@@ -213,13 +223,10 @@ class TestMeme < Minitest::Test
         print(c)
       end
     end
-  end
-
-  def test_calleq_to
     assert_produces("x") do
       a = byte(5)
       c = byte('x')
-      calleq_to(a, 5) do
+      calleq(a, 5) do
         print(c)
       end
     end
@@ -227,12 +234,11 @@ class TestMeme < Minitest::Test
     assert_produces("") do
       a = byte(5)
       c = byte('x')
-      calleq_to(a, 7) do
+      calleq(a, 7) do
         print(c)
       end
     end
   end
-
   def test_times
     assert_produces("0123") do
       times(4) do |i|

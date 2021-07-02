@@ -123,63 +123,52 @@ class Generator
       mem.alloc(size)
     end
 
-    def add(a, b)
-      raise("Sources and destination must be different") if a == b
+    def add(lhs, rhs)
+      result = byte
 
-      result = gen_var
+      lhs_clone = clone_input(lhs)
+      rhs_clone = clone_input(rhs)
 
-      a_clone = clone_var(a)
-      b_clone = clone_var(b)
-
-      zero(result)
-
-      bracket(a_clone) do
-        dec(a_clone)
+      bracket(lhs_clone) do
+        dec(lhs_clone)
         inc(result)
       end
 
-      bracket(b_clone) do
-        dec(b_clone)
+      bracket(rhs_clone) do
+        dec(rhs_clone)
         inc(result)
       end
 
-      free(a_clone)
-      free(b_clone)
+      free(lhs_clone)
+      free(rhs_clone)
 
       result
     end
 
-    def mul(a, b)
-      raise("Sources and destination must be different") if a == b
+    def mul(lhs, rhs)
+      result = byte
 
-      result = gen_var
+      lhs_clone = clone_input(lhs)
+      rhs_clone = clone_input(rhs)
 
-      a_clone = clone_var(a)
-      b_clone = clone_var(b)
+      loop_with(lhs_clone) { inc_with(result, rhs_clone) }
 
-      zero(result)
-
-      loop_with(a_clone) do
-        inc_with(result, b_clone)
-      end
-
-      free(a_clone)
-      free(b_clone)
+      free(lhs_clone)
+      free(rhs_clone)
 
       result
     end
 
     def eq?(lhs, rhs)
-      lhs_clone = clone_var(lhs)
-      rhs_clone = clone_var(rhs)
+      lhs_clone = clone_input(lhs)
+      rhs_clone = clone_input(rhs)
 
       bracket(lhs_clone) do
         dec(lhs_clone)
         dec(rhs_clone)
       end
 
-      result = gen_var
-      set(result, 1)
+      result = byte(1)
 
       bracket(rhs_clone, just_once: true) do
         dec(result)
@@ -192,8 +181,8 @@ class Generator
     end
 
     def lt?(lhs, rhs)
-      lhs_clone = clone_var(lhs)
-      rhs_clone = clone_var(rhs)
+      lhs_clone = clone_input(lhs)
+      rhs_clone = clone_input(rhs)
 
       result = byte
 
@@ -216,8 +205,8 @@ class Generator
     end
 
     def gt?(lhs, rhs)
-      lhs_clone = clone_var(lhs)
-      rhs_clone = clone_var(rhs)
+      lhs_clone = clone_input(lhs)
+      rhs_clone = clone_input(rhs)
 
       result = byte
 
@@ -240,8 +229,8 @@ class Generator
     end
 
     def lte?(lhs, rhs)
-      lhs_clone = clone_var(lhs)
-      rhs_clone = clone_var(rhs)
+      lhs_clone = clone_input(lhs)
+      rhs_clone = clone_input(rhs)
 
       result = byte
 
@@ -265,8 +254,8 @@ class Generator
     end
 
     def gte?(lhs, rhs)
-      lhs_clone = clone_var(lhs)
-      rhs_clone = clone_var(rhs)
+      lhs_clone = clone_input(lhs)
+      rhs_clone = clone_input(rhs)
 
       result = byte
 
@@ -289,25 +278,15 @@ class Generator
       result
     end
 
-    def eq_to?(v_num, value)
-      v_value = gen_var(value)
+    def mod(dividend, divisor)
+      raise("Mod value must be positive non zero") if divisor < 1
 
-      result = eq?(v_num, v_value)
-
-      free(v_value)
-
-      result
-    end
-
-    def mod_with(v_num, value)
-      raise("Mod value must be positive non zero") if value < 1
-
-      rem = gen_var
-      clone_v_num = clone_var(v_num)
+      rem = byte
+      clone_v_num = clone_input(dividend)
 
       bracket(clone_v_num) do
         inc(rem)
-        calleq_to(rem, value) { zero(rem) }
+        calleq(rem, divisor) { zero(rem) }
         dec(clone_v_num)
       end
 
@@ -347,7 +326,7 @@ class Generator
         dec(v_clone_dividend)
         inc(divisor_helper)
         
-        calleq_to(divisor_helper, divisor) do
+        calleq(divisor_helper, divisor) do
           zero(divisor_helper)
           inc(counter)
         end
@@ -361,9 +340,9 @@ class Generator
 
     def print_decimal(var)
       hundreds = div_with(var, 100)
-      _tens = mod_with(var, 100)
+      _tens = mod(var, 100)
       tens = div_with(_tens, 10)
-      ones = mod_with(var, 10)
+      ones = mod(var, 10)
 
       hundreds_and_tens = add(hundreds, tens)
 
@@ -428,7 +407,7 @@ class Generator
     end
 
     def callz(cond, &blk)
-      temp = gen_var
+      temp = byte
       inc(temp)
 
       cond_clone = clone_var(cond)
@@ -464,21 +443,11 @@ class Generator
       free(eq_res)
     end
 
-    def calleq_to(v_num, value, &blk)
-      eq_res = eq_to?(v_num, value)
-
-      bracket(eq_res, just_once: true) do
-        code_with_ctx(&blk)
-      end
-
-      free(eq_res)
-    end
-
     def times(n, &blk)
-      counter = gen_var
+      counter = byte
       set(counter, n)
 
-      idx = gen_var
+      idx = byte
 
       bracket(counter) do
         code_with_ctx(idx, &blk)
@@ -556,8 +525,8 @@ class Generator
     end
 
     def clone_var(var)
-      temp = gen_var
-      var_clone = gen_var
+      temp = byte
+      var_clone = byte
 
       bracket(var) do
         inc(temp)
@@ -575,14 +544,18 @@ class Generator
       var_clone
     end
 
-    def gen_var(value = 0)
-      byte(value)
+    def clone_input(obj)
+      variable?(obj) ? clone_var(obj) : byte(obj)
     end
 
     def code_with_ctx(*args, &blk)
       ctx = Context.new(mem)
       ctx.instance_exec(*args, &blk)
       write(ctx.source)
+    end
+
+    def variable?(obj)
+      obj.is_a?(String) && obj.size > 1
     end
   end
 
