@@ -229,54 +229,56 @@ class TestMeme < Minitest::Test
     end
   end
 
-  def test_calleq
+  def test_call_if
     assert_produces("x") do
       a = byte(5)
       b = byte(5)
       c = byte('x')
-      calleq(a, b) do
+
+      call_if(-> { eq?(a, b) }) do
         print(c)
       end
     end
+    
+    assert_produces("x") do
+      a = byte(5)
+      b = byte(7)
+      c = byte('x')
 
+      call_if(-> { lte?(a, b) }) do
+        print(c)
+      end
+    end
+    
     assert_produces("") do
       a = byte(5)
       b = byte(7)
       c = byte('x')
-      calleq(a, b) do
-        print(c)
-      end
-    end
-    assert_produces("x") do
-      a = byte(5)
-      c = byte('x')
-      calleq(a, 5) do
-        print(c)
-      end
-    end
 
-    assert_produces("") do
-      a = byte(5)
-      c = byte('x')
-      calleq(a, 7) do
+      call_if(-> { gte?(a, b) }) do
         print(c)
       end
     end
   end
+  
   def test_times
     assert_produces("0123") do
       times(4) do |i|
         print_digit(i)
       end
     end
-  end
-
-  def test_loop_with
+    
     assert_produces("****") do
       i = byte(4)
       a = byte('*')
-      loop_with(i) do
+      times(i) do
         print(a)
+      end
+    end
+    
+    assert_produces("abcde") do
+      times(5, from: 'a') do |i|
+        print(i)
       end
     end
   end

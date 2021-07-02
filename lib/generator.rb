@@ -151,7 +151,7 @@ class Generator
       lhs_clone = clone_input(lhs)
       rhs_clone = clone_input(rhs)
 
-      loop_with(lhs_clone) { inc(result, rhs_clone) }
+      times(lhs_clone) { inc(result, rhs_clone) }
 
       free(lhs_clone)
       free(rhs_clone)
@@ -187,7 +187,7 @@ class Generator
       result = byte
 
       # Hack to skip ops and return false when eq.
-      calleq(lhs, rhs) do
+      call_if(-> { eq?(lhs, rhs) }) do
         zero(rhs_clone)
       end
 
@@ -211,7 +211,7 @@ class Generator
       result = byte
 
       # Hack to skip ops and return false when eq.
-      calleq(lhs, rhs) do
+      call_if(-> { eq?(lhs, rhs) }) do
         zero(lhs_clone)
       end
 
@@ -235,7 +235,7 @@ class Generator
       result = byte
 
       # Hack to skip ops and return true when eq.
-      calleq(lhs, rhs) do
+      call_if(-> { eq?(lhs, rhs) }) do
         zero(rhs_clone)
         inc(result)
       end
@@ -260,7 +260,7 @@ class Generator
       result = byte
 
       # Hack to skip ops and return true when eq.
-      calleq(lhs, rhs) do
+      call_if(-> { eq?(lhs, rhs) }) do
         zero(lhs_clone)
         inc(result)
       end
@@ -286,7 +286,7 @@ class Generator
 
       bracket(clone_dividend) do
         inc(rem)
-        calleq(rem, divisor) { zero(rem) }
+        call_if(-> { eq?(rem, divisor) }) { zero(rem) }
         dec(clone_dividend)
       end
 
@@ -333,7 +333,7 @@ class Generator
         dec(clone_dividend)
         inc(divisor_helper)
         
-        calleq(divisor_helper, divisor) do
+        call_if(-> { eq?(divisor_helper, divisor) }) do
           zero(divisor_helper)
           inc(counter)
         end
@@ -448,21 +448,18 @@ class Generator
       free(cond_clone)
     end
 
-    def calleq(lhs, rhs, &blk)
-      eq_res = eq?(lhs, rhs)
+    def call_if(cond_blk, &blk)
+      res = exec(&cond_blk)
 
-      bracket(eq_res, just_once: true) do
-        code_with_ctx(&blk)
-      end
+      callnz(res, &blk)
 
-      free(eq_res)
+      free(res)
     end
 
-    def times(n, &blk)
-      counter = byte
-      set(counter, n)
+    def times(n, from: 0, &blk)
+      counter = clone_input(n)
 
-      idx = byte
+      idx = byte(from)
 
       bracket(counter) do
         code_with_ctx(idx, &blk)
@@ -471,17 +468,6 @@ class Generator
       end
 
       free(idx)
-    end
-
-    def loop_with(var, &blk)
-      counter = clone_var(var)
-
-      bracket(counter) do
-        code_with_ctx(&blk)
-        dec(counter)
-      end
-
-      free(counter)
     end
 
     def debug(message)
@@ -493,8 +479,11 @@ class Generator
     #
     def exec(&blk)
       ctx = Context.new(mem)
-      ctx.instance_exec(&blk)
+      
+      res = ctx.instance_exec(&blk)
       write(ctx.source)
+
+      res
     end
 
     def read_byte
