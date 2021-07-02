@@ -151,7 +151,7 @@ class Generator
       lhs_clone = clone_input(lhs)
       rhs_clone = clone_input(rhs)
 
-      loop_with(lhs_clone) { inc_with(result, rhs_clone) }
+      loop_with(lhs_clone) { inc(result, rhs_clone) }
 
       free(lhs_clone)
       free(rhs_clone)
@@ -358,59 +358,67 @@ class Generator
       print_digit(ones)
     end
 
-    def zero(dest)
-      go(dest)
+    def zero(v)
+      go(v)
       write("[-]") # Dec until zero
     end
 
-    def inc(dest, value = 1)
-      go(dest)
-      write('+' * value)
-    end
-
-    def inc_with(dest, var)
-      acc = clone_var(var)
-
-      bracket(acc) do
-        inc(dest)
-        dec(acc)
+    def inc(v, amount = 1)
+      if variable?(amount)
+        amount_clone = clone_var(amount)
+  
+        bracket(amount_clone) do
+          inc(v)
+          dec(amount_clone)
+        end
+  
+        free(amount_clone)
+      else
+        go(v)
+        write('+' * amount)
       end
-
-      free(acc)
     end
 
-    def dec(dest, value = 1)
-      go(dest)
-      write('-' * value)
-    end
-
-    # Todo: *_with should be the value version - or find a consistent way!
-    def dec_with(dest, var)
-      acc = clone_var(var)
-
-      bracket(acc) do
-        dec(dest)
-        dec(acc)
+    def dec(v, amount = 1)
+      if variable?(amount)
+        amount_clone = clone_var(amount)
+  
+        bracket(amount_clone) do
+          dec(v)
+          dec(amount_clone)
+        end
+  
+        free(amount_clone)
+      else
+        go(v)
+        write('-' * amount)
       end
-
-      free(acc)
     end
 
-    def set(dest, value)
-      zero(dest)
-      go(dest)
+    def set(v, to)
+      if variable?(to)
+        zero(v)
+        inc(v, to)
+      else
+        zero(v)
+        go(v)
 
-      value = value.ord if value.is_a?(String)
-      write("+" * value)
+        to = to.ord if char_value?(to)
+        write("+" * to)
+      end
     end
 
     def set_arr(arr, value)
       raise("Input must be an #{Allocation.name}") unless arr.is_a?(Allocation)
       raise("Value does not fit to array") unless arr.size >= value.size
 
-      value.chars.each_with_index do |ch, i|
-        set(arr[i], ch)
+      list = case value
+      when String then value.chars
+      when Array then value
+      else raise("Unknown type for array assignment")
       end
+
+      list.each_with_index { |ch, i| set(arr[i], ch) }
     end
 
     def callz(cond, &blk)
@@ -552,7 +560,7 @@ class Generator
     end
 
     def clone_input(obj)
-      variable?(obj) ? clone_var(obj) : byte(obj)
+      variable?(obj) ? clone_var(obj) : byte(char_value?(obj) ? obj.ord : obj.to_i)
     end
 
     def code_with_ctx(*args, &blk)
@@ -563,6 +571,10 @@ class Generator
 
     def variable?(obj)
       obj.is_a?(String) && obj.size > 1
+    end
+
+    def char_value?(obj)
+      obj.is_a?(String) && obj.size == 1
     end
   end
 

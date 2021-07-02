@@ -135,6 +135,14 @@ class TestMeme < Minitest::Test
     end
   end
 
+  def test_set_arr
+    assert_produces("CEC") do
+      arr = alloc(3)
+      set_arr(arr, [67, 69, 67])
+      print_arr(arr)
+    end
+  end
+
   def test_inc
     assert_produces("B") do
       a = byte('A')
@@ -143,11 +151,11 @@ class TestMeme < Minitest::Test
     end
   end
 
-  def test_inc_with
+  def test_inc
     assert_produces("R") do
       a = byte('P')
       b = byte(2)
-      inc_with(a, b)
+      inc(a, b)
       print(a)
     end
   end
@@ -160,11 +168,11 @@ class TestMeme < Minitest::Test
     end
   end
 
-  def test_dec_with
+  def test_dec
     assert_produces("P") do
       a = byte('R')
       b = byte(2)
-      dec_with(a, b)
+      dec(a, b)
       print(a)
     end
   end
@@ -175,6 +183,13 @@ class TestMeme < Minitest::Test
       print(a)
       set(a, 'x')
       print(a)
+    end
+
+    assert_produces("*") do
+      a = byte('*')
+      b = byte(7)
+      set(b, a)
+      print(b)
     end
   end
 

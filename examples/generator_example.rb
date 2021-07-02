@@ -15,7 +15,7 @@ g.bf do
   peaches_price = byte(7)
 
   grapes_free_quantity = div(grapes_quantity, 2)
-  dec_with(grapes_quantity, grapes_free_quantity)
+  dec(grapes_quantity, grapes_free_quantity)
 
   grapes_total = mul(grapes_quantity, grapes_price)
   apples_total = mul(apples_quantity, apples_price)
