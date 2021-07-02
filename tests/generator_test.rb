@@ -296,6 +296,15 @@ class TestMeme < Minitest::Test
       print(a)
       exec(&blk)
     end
+
+    assert_produces("x") do
+      res = exec(-> {
+        a = byte('x')
+        a
+      })
+
+      print(res)
+    end
   end
 
   def test_conditional_blocks_do_not_mess_up_memory_location
