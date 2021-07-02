@@ -1,39 +1,28 @@
-require_relative 'generator'
-require_relative 'interpreter'
+require_relative '../lib/generator'
+require_relative '../lib/interpreter'
 
 gen = Generator.new
 gen.bf do
-  var(:dot)
-  var(:f, 'f')
-  var(:i, 'i')
-  var(:z, 'z')
-  var(:b, 'b')
-  var(:u, 'u')
-  var(:nl, "\n")
-  times(100) do |i|
-    set(:dot, '.')
+  is_nothing = byte
+  fizz = alloc(4, 'fizz')
+  buzz = alloc(4, 'buzz')
+  nl =  byte("\n")
 
-    mod3 = mod(i, 3)
-    callz(mod3) do
-      print(:f)
-      print(:i)
-      print(:z)
-      print(:z)
+  times(100) do |idx|
+    set(is_nothing, 1)
 
-      zero(:dot)
-    end
-    mod5 = mod(i, 5)
-    callz(mod5) do
-      print(:b)
-      print(:u)
-      print(:z)
-      print(:z)
-
-      zero(:dot)
+    callz(mod(idx, 3)) do
+      print_arr(fizz)
+      zero(is_nothing)
     end
 
-    print(:dot)
-    print(:nl)
+    callz(mod(idx, 5)) do
+      print_arr(buzz)
+      zero(is_nothing)
+    end
+
+    callnz(is_nothing) { print_decimal(idx) }
+    print(nl)
   end
 end
 
@@ -42,13 +31,17 @@ ctx = gen.main_ctx
 puts ctx
   .source
   .chars
-  .each_slice(128)
+  .each_slice(64)
   .to_a
   .map(&:join)
   .join("\n")
 
+screen = ""
+
 int = Interpreter.new(ctx.source)
-int.execute
+int.execute(screen)
+
+puts(screen)
 
 int.dump
 gen.dump

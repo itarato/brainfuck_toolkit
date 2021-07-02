@@ -1,5 +1,13 @@
 require 'forwardable'
 
+#
+# Guidelines:
+# - blocks (brackets) must start and end with the same memory location, otherwise the generator
+#   cannot track memory pointers
+# - functions (unless it does not make sense) must be able to work with both values and
+#   variables
+#
+
 class Generator
   attr_reader(:source)
 
@@ -119,8 +127,10 @@ class Generator
       name
     end
 
-    def alloc(size)
-      mem.alloc(size)
+    def alloc(size, value = [])
+      arr = mem.alloc(size)
+      set_arr(arr, value) unless value.empty?
+      arr
     end
 
     def add(lhs, rhs)
@@ -449,11 +459,22 @@ class Generator
     end
 
     def call_if(cond_blk, &blk)
-      res = exec(&cond_blk)
+      # It looks like we should delete the result variable of exec, however that might be
+      # a global variable, we cannot tell -> so no free here.
+      callnz(exec(&cond_blk), &blk)
+    end
 
-      callnz(res, &blk)
+    def neg(v)
+      res = byte(1)
+      v_clone = clone_input(v)
 
-      free(res)
+      bracket(v_clone, just_once: true) do
+        zero(res)
+      end
+
+      free(v_clone)
+
+      res
     end
 
     def times(n, from: 0, &blk)

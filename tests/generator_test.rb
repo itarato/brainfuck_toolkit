@@ -133,6 +133,11 @@ class TestMeme < Minitest::Test
       set_arr(arr, "why")
       print_arr(arr)
     end
+
+    assert_produces("why") do
+      arr = alloc(3, "why")
+      print_arr(arr)
+    end
   end
 
   def test_set_arr
@@ -259,6 +264,14 @@ class TestMeme < Minitest::Test
         print(c)
       end
     end
+    
+    assert_produces("ax") do
+      x = byte('x')
+      call_if(-> { x }) do
+        print('a')
+      end
+      print(x)
+    end
   end
   
   def test_times
@@ -298,12 +311,7 @@ class TestMeme < Minitest::Test
     end
 
     assert_produces("x") do
-      res = exec(-> {
-        a = byte('x')
-        a
-      })
-
-      print(res)
+      print(exec { byte('x') })
     end
   end
 
@@ -469,6 +477,14 @@ class TestMeme < Minitest::Test
       y = byte(30)
       print_digit(gte?(x, y))
     end
+  end
+
+  def test_neg
+    assert_produces('0') { print_digit(neg(byte(1))) }
+    assert_produces('0') { print_digit(neg(byte(3))) }
+    assert_produces('1') { print_digit(neg(byte(0))) }
+    assert_produces('0') { print_digit(neg(3)) }
+    assert_produces('1') { print_digit(neg(0)) }
   end
 
   private
